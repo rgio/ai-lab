@@ -8,6 +8,10 @@ const nextConfig = {
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Adjust the path to match the location of your "AI-town" project
 
+    if (dev && !isServer) {
+      config.devtool = 'eval-source-map';
+    }
+
     const aiTownModulePath = path.join(__dirname, 'AI-town/node_modules');
 
     // Configure webpack to resolve modules from the "AI-town" module path
