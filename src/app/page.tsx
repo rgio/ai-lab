@@ -1,13 +1,35 @@
+'use client'
+import { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, UserButton, auth } from '@clerk/nextjs';
 import GameWrapper from '@/components/GameWrapper';
 import FreezeButton from '@/components/FreezeButton';
 import LoginButton from '@/components/LoginButton';
+import Menu from '@/components/Menu';
 
 // Disabling SSR for these since they don't work server side.
 import dynamic from 'next/dynamic';
 const MusicButton = dynamic(() => import('../components/MusicButton'), { ssr: false });
 
 export default function Home() {
+  const [isMenuVisible, setMenuVisibility] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: any) => {
+      if (event.keyCode === 27) { // 27 is the key code for Esc
+        console.log(`ESC pressed`)
+        setMenuVisibility(prevVisibility => !prevVisibility);
+      }
+    };
+
+    // Attach the event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      // Detach the event listener on cleanup
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-between font-body game-background">
       <div className="p-6 absolute top-0 right-0 z-10 text-2xl">
@@ -51,6 +73,10 @@ export default function Home() {
           </div>
         </footer>
       </div>
+      <Menu 
+        isOpen={isMenuVisible}
+        setIsOpen={setMenuVisibility}
+      />
     </main>
   );
 }
