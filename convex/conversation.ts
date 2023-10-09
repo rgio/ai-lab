@@ -14,6 +14,7 @@ export async function startConversation(
   memory: MemoryDB,
   player: Player,
 ) {
+  console.log("CONVERSATION STARTED")
   const newFriendsNames = audience.map((p) => p.name);
 
   const { embedding } = await fetchEmbeddingWithCache(

@@ -14,7 +14,12 @@ export default function Menu({
     setIsOpen(false)
   }
 
-  const createWorld = useMutation(api.world.createWorld);
+  const createWorldMutation = useMutation(api.world.createWorld);
+
+  const createWorld = async () => {
+    await createWorldMutation({mapId: "46ezxvakw17mjqqdt4v46agw9jt4y5r", characterIds:["3xd7q35bpm47snvgws0jgaa99jt6rp8","3wfvtt2dhjv3xpms0cnpfhk29jt613r"]});
+  };
+  //npx convex run world:createWorld '{"mapId": "46ezxvakw17mjqqdt4v46agw9jt4y5r", "characterIds":["3xd7q35bpm47snvgws0jgaa99jt6rp8","3wfvtt2dhjv3xpms0cnpfhk29jt613r"]}'
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -60,7 +65,7 @@ export default function Menu({
                   <button
                     type="button"
                     className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                    onClick={closeModal}
+                    onClick={createWorld}
                   >
                     Create World
                   </button>

@@ -16,6 +16,7 @@ import type {
 } from "convex/server";
 import type * as agent from "../agent";
 import type * as characterdata_data from "../characterdata/data";
+import type * as characterdata_data_orig from "../characterdata/data_orig";
 import type * as characterdata_spritesheets_f1 from "../characterdata/spritesheets/f1";
 import type * as characterdata_spritesheets_f2 from "../characterdata/spritesheets/f2";
 import type * as characterdata_spritesheets_f3 from "../characterdata/spritesheets/f3";
@@ -49,6 +50,7 @@ import type * as maps_firstmap from "../maps/firstmap";
 import type * as music from "../music";
 import type * as players from "../players";
 import type * as testing from "../testing";
+import type * as world from "../world";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -61,6 +63,7 @@ import type * as testing from "../testing";
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   "characterdata/data": typeof characterdata_data;
+  "characterdata/data_orig": typeof characterdata_data_orig;
   "characterdata/spritesheets/f1": typeof characterdata_spritesheets_f1;
   "characterdata/spritesheets/f2": typeof characterdata_spritesheets_f2;
   "characterdata/spritesheets/f3": typeof characterdata_spritesheets_f3;
@@ -94,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   music: typeof music;
   players: typeof players;
   testing: typeof testing;
+  world: typeof world;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

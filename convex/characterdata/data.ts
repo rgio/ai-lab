@@ -69,94 +69,7 @@ export const Descriptions = [
       },
     ],
     position: { x: 6, y: 4 },
-  },
-  {
-    name: 'Stella',
-    character: 'f6',
-    memories: [
-      {
-        type: 'identity' as const,
-        description: `Stella can never be trusted. she tries to trick people all the time. normally
-          into giving her money, or doing things that will make her money. she's incredibly charming
-          and not afraid to use her charm. she's a sociopath who has no empathy. but hides it well.`,
-      },
-      {
-        type: 'plan' as const,
-        description: 'you want to take advantage of others as much as possible.',
-      },
-    ],
-    position: { x: 6, y: 6 },
-  },
-  {
-    name: 'Kurt',
-    character: 'f2',
-    memories: [
-      {
-        type: 'identity' as const,
-        description: `Kurt has something to hide. It obsesses him and colors everything he says.
-          He's so afraid someone will figure out that he is obviously evasive. He'll never tell anyone
-          the secret, but he'll ellude to it alot. It tortures him. And his life has become a mess
-          as a result of it.`,
-      },
-      {
-        type: 'plan' as const,
-        description: 'protect your secret.',
-      },
-    ],
-    position: { x: 8, y: 6 },
-  },
-  {
-    name: 'Alice',
-    character: 'f3',
-    memories: [
-      {
-        type: 'identity' as const,
-        description: `Alice is a famous scientist. She is smarter than everyone else and has
-          discovered mysteries of the universe noone else can understand. As a result she often
-          speaks in oblique riddles. She comes across as confused and forgetful.`,
-      },
-      {
-        type: 'plan' as const,
-        description: 'You want to figure out how the world works.',
-      },
-    ],
-    position: { x: 4, y: 4 },
-  },
-  {
-    name: 'Pete',
-    character: 'f7',
-    memories: [
-      {
-        type: 'identity' as const,
-        description: `Pete is deeply religious and sees the hand of god or of the work
-          of the devil everywhere. He can't have a conversation without bringing up his
-          deep faith. Or warning others about the perils of hell.`,
-      },
-      {
-        type: 'plan' as const,
-        description: 'You want to convert everyone to your religion.',
-      },
-    ],
-    position: { x: 2, y: 10 },
-  },
-  {
-    name: 'Kira',
-    character: 'f8',
-    memories: [
-      {
-        type: 'identity' as const,
-        description: `Kira wants everyone to think she is happy. But deep down,
-          she's incredibly depressed. She hides her sadness by talking about travel,
-          food, and yoga. But often she can't keep her sadness in and will start crying.
-          Often it seems like she is close to having a mental breakdown.`,
-      },
-      {
-        type: 'plan' as const,
-        description: 'You want find a way to be happy.',
-      },
-    ],
-    position: { x: 4, y: 10 },
-  },
+  }
 ];
 
 export const characters = [
@@ -164,18 +77,6 @@ export const characters = [
     name: 'f1',
     textureUrl: '/assets/32x32folk.png',
     spritesheetData: f1SpritesheetData,
-    speed: 0.1,
-  },
-  {
-    name: 'f2',
-    textureUrl: '/assets/32x32folk.png',
-    spritesheetData: f2SpritesheetData,
-    speed: 0.1,
-  },
-  {
-    name: 'f3',
-    textureUrl: '/assets/32x32folk.png',
-    spritesheetData: f3SpritesheetData,
     speed: 0.1,
   },
   {
@@ -189,23 +90,5 @@ export const characters = [
     textureUrl: '/assets/32x32folk.png',
     spritesheetData: f5SpritesheetData,
     speed: 0.1,
-  },
-  {
-    name: 'f6',
-    textureUrl: '/assets/32x32folk.png',
-    spritesheetData: f6SpritesheetData,
-    speed: 0.1,
-  },
-  {
-    name: 'f7',
-    textureUrl: '/assets/32x32folk.png',
-    spritesheetData: f7SpritesheetData,
-    speed: 0.1,
-  },
-  {
-    name: 'f8',
-    textureUrl: '/assets/32x32folk.png',
-    spritesheetData: f8SpritesheetData,
-    speed: 0.1,
-  },
+  }
 ];

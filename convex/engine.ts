@@ -14,6 +14,7 @@ import { asyncMap, pruneNull } from './lib/utils';
 export const tick = internalMutation({
   args: { worldId: v.id('worlds'), noSchedule: v.optional(v.boolean()) },
   handler: async (ctx, { worldId, noSchedule }) => {
+    console.log(`TICK`);
     const ts = Date.now();
     // Fetch the first recent heartbeat.
     if (!(await getRecentHeartbeat(ctx.db, worldId))) {

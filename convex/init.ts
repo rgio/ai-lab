@@ -30,7 +30,7 @@ export const existingWorld = internalQuery({
   },
 });
 
-async function makeWorld(db: DatabaseWriter, frozen: boolean) {
+export async function makeWorld(db: DatabaseWriter, frozen: boolean) {
   const mapId = await db.insert('maps', {
     tileSetUrl: tilesetpath,
     tileSetDim: tilefiledim,
@@ -122,15 +122,21 @@ export const resetFrozen = internalAction({
 export const seed = internalAction({
   args: { newWorld: v.optional(v.boolean()), frozen: v.optional(v.boolean()) },
   handler: async (ctx, { newWorld, frozen }): Promise<Id<'worlds'>> => {
+    console.log('SEED')
+    console.log(`ctx: ${JSON.stringify(ctx)}`);
     const existingWorldId = await ctx.runQuery(internal.init.existingWorld);
+    console.log(`Existing worldId: ${JSON.stringify(existingWorldId)}`);
     if (!newWorld && existingWorldId) return existingWorldId._id;
-
+    console.log(`newWorld: ${newWorld}`);
+    console.log(`frozen: ${frozen}`);
     const characters = characterData;
+    console.log(`Characters: ${JSON.stringify(characters)}`);
     const { playersByName, worldId } = await ctx.runMutation(internal.init.addPlayers, {
       newWorld,
       characters,
       frozen,
     });
+    console.log(`Players: ${JSON.stringify(playersByName)}`);
     console.log(`Created world ${worldId}`);
     const memories = Descriptions.flatMap(({ name, memories }) => {
       const playerId = playersByName[name]!;
@@ -154,6 +160,7 @@ export const seed = internalAction({
         return newMemory;
       });
     });
+    console.log(`Memories: ${JSON.stringify(memories)}`);
     // It will check the cache, calculate missing embeddings, and add them.
     // If it fails here, it won't be retried. But you could clear the memor
     await MemoryDB(ctx).addMemories(memories);
