@@ -211,6 +211,46 @@ export const Characters = Table('characters', {
 });
 export type SpritesheetData = Infer<(typeof Characters.fields)['spritesheetData']>;
 
+export const Descriptions = v.object({
+  name: v.string(),
+  character: v.string(),
+  memories: v.array(v.union(
+    // Useful for seed memories, high level goals
+    v.object({
+      type: v.literal('identity'),
+      description: v.string(),
+    }),
+    // Setting up dynamics between players
+    v.object({
+      type: v.literal('relationship'),
+      playerId: v.optional(v.id('players')),
+      description: v.string(),
+      playerName: v.string(),
+    }),
+    // Per-agent summary of recent observations
+    // Can start out all the same, but could be dependent on personality
+    v.object({
+      type: v.literal('conversation'),
+      conversationId: v.id('conversations'),
+      description: v.string(),
+    }),
+    v.object({
+      type: v.literal('plan'),
+      description: v.string(),
+    }),
+
+    // Exercises left to the reader:
+
+    v.object({
+      type: v.literal('reflection'),
+      relatedMemoryIds: v.array(v.id('memories')),
+      description: v.string(),
+    }),
+  )),
+  position: v.object({ x: v.number(), y: v.number() }),
+});
+export type Descriptions = Infer<typeof Descriptions>;
+
 // Hierarchical location within tree
 // Future: build zone lookup from position, whether player-dependent or global.
 // export const Zones = Table('zones', {
