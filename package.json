@@ -14,7 +14,10 @@
   "dependencies": {
     "@clerk/clerk-react": "^4.21.9-snapshot.56dc3e3",
     "@clerk/nextjs": "^4.21.9-snapshot.56dc3e3",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
     "@headlessui/react": "^1.7.17",
+    "@mui/material": "^5.14.12",
     "@pinecone-database/pinecone": "^0.1.6",
     "@pixi/react": "^7.1.0",
     "@pixi/sound": "^5.2.0",

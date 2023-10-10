@@ -1,20 +1,17 @@
-import { v } from 'convex/values';
+import { Infer, v } from 'convex/values';
 import { Id } from './_generated/dataModel';
 import { mutation } from './_generated/server';
 import { makeWorld } from './init';
+import { Characters } from './schema';
 
+type Character = Infer<typeof Characters.doc>;
 
 export const createWorld = mutation({
     args: { mapId: v.string(), characterIds: v.array(v.string()) },
     handler: async (ctx: any, { mapId, characterIds }) => {
-        console.log("createWorld");
-        console.log(`ctx: ${JSON.stringify(ctx)}`);
         const worldId = await makeWorld(ctx.db, false);
-        console.log(`characterids: ${JSON.stringify(characterIds)}`);
-        console.log('handler map', mapId);
-        console.log('world map', mapId);
-        const characters = await Promise.all(characterIds.map((id) => ctx.db.get(id)));
-        console.log(`characters: ${JSON.stringify(characters)}`);
+        const allCharacters: Character[] = await ctx.db.query("characters").collect();
+        const characters = allCharacters.filter((character) => characterIds.includes(character._id));
 
         const playersByName: Record<string, Id<'players'>> = {};
         for (const character of characters) {

@@ -1,7 +1,8 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { useMutation } from 'convex/react';
+import { Checkbox } from '@mui/material';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 
 export default function Menu({
   isOpen,
@@ -14,12 +15,25 @@ export default function Menu({
     setIsOpen(false)
   }
 
+  const allCharacters = useQuery(api.characters.getAllCharacters);
   const createWorldMutation = useMutation(api.world.createWorld);
 
   const createWorld = async () => {
-    await createWorldMutation({mapId: "46ezxvakw17mjqqdt4v46agw9jt4y5r", characterIds:["3xd7q35bpm47snvgws0jgaa99jt6rp8","3wfvtt2dhjv3xpms0cnpfhk29jt613r"]});
+    await createWorldMutation({mapId: "46ezxvakw17mjqqdt4v46agw9jt4y5r", characterIds: Array.from(characters) });
   };
   //npx convex run world:createWorld '{"mapId": "46ezxvakw17mjqqdt4v46agw9jt4y5r", "characterIds":["3xd7q35bpm47snvgws0jgaa99jt6rp8","3wfvtt2dhjv3xpms0cnpfhk29jt613r"]}'
+
+  const [characters, setCharacters] = useState<Set<string>>(new Set());
+
+  const toggleCharacter = (characterId: string) => {
+    if (characters.has(characterId)) {
+      characters.delete(characterId);
+      setCharacters(new Set(characters));
+    } else {
+      characters.add(characterId);
+      setCharacters(new Set(characters));
+    }
+  }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -62,13 +76,25 @@ export default function Menu({
                 </div> */}
 
                 <div className="mt-4">
-                  <button
-                    type="button"
-                    className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                    onClick={createWorld}
-                  >
-                    Create World
-                  </button>
+                  <form onSubmit={createWorld}>
+                    {allCharacters?.map((character: Record<string, any>) => (
+                      <Fragment key={character._id}>
+                        <Checkbox
+                          aria-labelledby={character._id}
+                          checked={characters.has(character._id)}
+                          onChange={() => toggleCharacter(character._id)}
+                        />
+                        <span id={character._id}>{character.name}</span>
+                      </Fragment>
+                    ))}
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={createWorld}
+                    >
+                      Create World
+                    </button>
+                  </form>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
