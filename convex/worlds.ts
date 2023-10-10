@@ -1,52 +1,66 @@
-import { Infer, v } from 'convex/values';
-import { Id } from './_generated/dataModel';
-import { query, mutation } from './_generated/server';
-import { makeWorld } from './init';
-import { Characters } from './schema';
+import { v } from 'convex/values';
+import { Doc, Id } from './_generated/dataModel';
+import { internal } from './_generated/api';
+import { query, action } from './_generated/server';
+import { MemoryDB } from './lib/memory';
+import { Characters, Descriptions } from './schema';
 
-type Character = Infer<typeof Characters.doc>;
+//type Player = { id: Id<'players'>; name: string; identity: string };
 
-export const createWorld = mutation({
-    args: { mapId: v.string(), characterIds: v.array(v.string()) },
-    handler: async (ctx: any, { mapId, characterIds }) => {
-        const worldId = await makeWorld(ctx.db, false);
-        const allCharacters: Character[] = await ctx.db.query("characters").collect();
-        const characters = allCharacters.filter((character) => characterIds.includes(character._id));
+export const createWorld = action({
+    args: { 
+        mapId: v.string(), 
+        characters: v.array(v.object(Characters.fields)), 
+        descriptions: v.array(Descriptions)
+    },
+    handler: async (ctx: any, { mapId, characters, descriptions }) => {
+        //const worldId = await makeWorld(ctx.db, false);
+        //const allCharacters: Character[] = await ctx.db.query("characters").collect();
+        // const characters = allCharacters.filter((character) => characterIds.includes(character._id));
+        type addPlayersResult = {
+          playersByName: Record<string, Id<'players'>>;
+          worldId: Id<'worlds'>;
+        };
 
-        const playersByName: Record<string, Id<'players'>> = {};
-        for (const character of characters) {
-            const name = character.name; // TODO: this is wrong, should be player.name (from characterData) but we don't have access to that here
-            //const position = { x: 10, y: 10 } // TODO: also from characterData;
-            let position;
-            const characterId = character._id;
-            const playerId = await ctx.db.insert('players', {
-                name,
-                worldId,
-                characterId,
-            });
-            const agentId = await ctx.db.insert('agents', {
+        console.log("Before")
+
+        const result: addPlayersResult = await ctx.runMutation(internal.init.addPlayers, {
+          newWorld: true,
+          characters,
+          descriptions,
+          frozen: false,
+          mapId,
+        });
+
+        console.log(`Result: ${JSON.stringify(result)}`);
+
+        const { playersByName, worldId } = result;
+
+        const memories = descriptions.flatMap(({ name, memories }) => {
+            const playerId = playersByName[name]!;
+            return memories.map((memory, idx) => {
+              const { description, ...rest } = memory;
+              let data: Doc<'memories'>['data'] | undefined;
+              if (rest.type === 'relationship') {
+                const { playerName, ...relationship } = rest;
+                const otherId = playersByName[playerName!];
+                if (!otherId) throw new Error(`No player named ${playerName}`);
+                data = { ...relationship, playerId: otherId };
+              } else {
+                data = rest;
+              }
+              const newMemory = {
                 playerId,
-                scheduled: false,
-                thinking: false,
-                worldId,
-                nextWakeTs: Date.now(),
-                lastWakeTs: Date.now(),
+                data,
+                description: memory.description,
+              };
+      
+              return newMemory;
             });
-            await ctx.db.patch(playerId, { agentId });
-            await ctx.db.insert('journal', {
-                playerId,
-                data: {
-                type: 'stopped',
-                reason: 'idle',
-                pose: {
-                    orientation: 0,
-                    position: position ?? { x: 1, y: 1 + playersByName.length },
-                },
-                },
-            });
-            playersByName[name] = playerId;
-        }
-
+        });
+        await MemoryDB(ctx).addMemories(memories);
+        await ctx.runMutation(internal.engine.tick, { worldId });
+        return worldId;
     },
 });
 

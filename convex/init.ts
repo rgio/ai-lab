@@ -8,7 +8,7 @@ import {
   internalQuery,
 } from './_generated/server';
 import { MemoryDB } from './lib/memory';
-import { Characters } from './schema';
+import { Characters, Descriptions as DescriptionsSchema } from './schema';
 import { tiledim, objmap, tilefiledim, bgtiles, tilesetpath } from './maps/firstmap';
 import { Descriptions, characters as characterData } from './characterdata/data';
 
@@ -30,17 +30,26 @@ export const existingWorld = internalQuery({
   },
 });
 
-export async function makeWorld(db: DatabaseWriter, frozen: boolean) {
-  const mapId = await db.insert('maps', {
-    tileSetUrl: tilesetpath,
-    tileSetDim: tilefiledim,
-    tileDim: tiledim,
-    bgTiles: bgtiles,
-    objectTiles: objmap,
-  });
+export async function makeWorld(db: DatabaseWriter, frozen: boolean, mapId?: Id<'maps'>) {
+  let width, height;
+  if (!mapId) {
+    mapId = await db.insert('maps', {
+      tileSetUrl: tilesetpath,
+      tileSetDim: tilefiledim,
+      tileDim: tiledim,
+      bgTiles: bgtiles,
+      objectTiles: objmap,
+    });
+    width = bgtiles[0].length;
+    height = bgtiles[0][0].length;
+  } else {
+    const map = await db.get(mapId); //TODO throw error if invalid mapId
+    width = map?.bgTiles[0].length;
+    height = map?.bgTiles[0][0].length;
+  }
   const worldId = await db.insert('worlds', {
-    width: bgtiles[0].length,
-    height: bgtiles[0][0].length,
+    width,
+    height,
     mapId,
     frozen,
   });
@@ -51,19 +60,22 @@ export const addPlayers = internalMutation({
   args: {
     newWorld: v.optional(v.boolean()),
     characters: v.array(v.object(Characters.fields)),
+    descriptions: v.optional(v.array(DescriptionsSchema)),
     frozen: v.optional(v.boolean()),
+    mapId: v.optional(v.id('maps')),
   },
   handler: async (ctx, args) => {
     const worldId =
       (!args.newWorld && (await ctx.db.query('worlds').first())?._id) ||
-      (await makeWorld(ctx.db, args.frozen ?? false));
+      (await makeWorld(ctx.db, args.frozen ?? false, args.mapId));
     const charactersByName: Record<string, Id<'characters'>> = {};
     for (const character of args.characters) {
       const characterId = await ctx.db.insert('characters', character);
       charactersByName[character.name] = characterId;
     }
+    const descriptions = args.descriptions ?? Descriptions;
     const playersByName: Record<string, Id<'players'>> = {};
-    for (const { name, character, position } of Descriptions) {
+    for (const { name, character, position } of descriptions) {
       const characterId = charactersByName[character];
       const playerId = await ctx.db.insert('players', {
         name,

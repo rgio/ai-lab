@@ -1,9 +1,9 @@
 import { Dialog, Transition } from '@headlessui/react'
 import { Checkbox } from '@mui/material';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useAction } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Fragment, useState } from 'react'
-import { Descriptions, characters as characterData } from '../../convex/characterData/data';
+import { Descriptions, characters as characterData } from '../../convex/characterdata/data';
 
 export default function Menu({
   isOpen,
@@ -18,34 +18,36 @@ export default function Menu({
 
   const allMaps = useQuery(api.worlds.getAllMaps);
   const allCharacters = characterData;
-  const createWorldMutation = useMutation(api.worlds.createWorld);
+  const createWorldAction = useAction(api.worlds.createWorld);
 
   const [selectedMap, setSelectedMap] = useState<string>();
-  const [characters, setCharacters] = useState<Set<string>>(new Set());
-  const [currentStep, setCurrentStep] = useState<int>();
+  const [characterNames, setCharacterNames] = useState<Set<string>>(new Set());
+  const [currentStep, setCurrentStep] = useState<number>();
   const [creatingWorld, setCreatingWorld] = useState<boolean>(false);
 
   const createWorldSteps = ["Select Map", "Select Characters"];
 
   const createWorld = async () => {
-    await createWorldMutation({mapId: selectedMap, characterIds: Array.from(characters) });
+    const characters = allCharacters?.filter((character) => characterNames.has(character.name));
+    const descriptions = Descriptions?.filter((description) => characterNames.has(description.character));
+    await createWorldAction({mapId: selectedMap!, characters, descriptions });
   };
 
   const toggleMap = (mapId: string) => {
     if (selectedMap == mapId) {
-      setSelectedMap(null);
+      setSelectedMap(undefined);
     } else {
       setSelectedMap(mapId);
     }
   }
 
-  const toggleCharacter = (characterId: string) => {
-    if (characters.has(characterId)) {
-      characters.delete(characterId);
-      setCharacters(new Set(characters));
+  const toggleCharacter = (characterName: string) => {
+    if (characterNames.has(characterName)) {
+      characterNames.delete(characterName);
+      setCharacterNames(new Set(characterNames));
     } else {
-      characters.add(characterId);
-      setCharacters(new Set(characters));
+      characterNames.add(characterName);
+      setCharacterNames(new Set(characterNames));
     }
   }
 
@@ -54,7 +56,7 @@ export default function Menu({
       return "Menu";
     }
     else {
-      return createWorldSteps[currentStep];
+      return createWorldSteps[currentStep!];
     }
   }
 
@@ -154,14 +156,14 @@ export default function Menu({
                         <>
                           <div className="max-h-60 overflow-auto">
                             {allCharacters?.map((character: Record<string, any>) => (
-                                <Fragment key={character._id}>
+                                <Fragment key={character.name}>
                                   <div className="flex items-center">
                                     <Checkbox
                                       aria-labelledby={character._id}
-                                      checked={characters.has(character._id)}
-                                      onChange={() => toggleCharacter(character._id)}
+                                      checked={characterNames.has(character.name)}
+                                      onChange={() => toggleCharacter(character.name)}
                                     />
-                                    <span className="text-black" id={character._id}>{Descriptions?.find((el) => el.character == character.name).name}</span>
+                                    <span className="text-black" id={character._id}>{Descriptions?.find((el) => el.character == character.name)?.name}</span>
                                   </div>
                                 </Fragment>
                             ))}
