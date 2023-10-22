@@ -17,16 +17,24 @@ export default function Menu({
   }
 
   const allMaps = useQuery(api.worlds.getAllMaps);
+  const allWorlds = useQuery(api.worlds.getAllWorlds);
   const allCharacters = characterData;
   const createWorldAction = useAction(api.worlds.createWorld);
+  const loadWorldAction = useAction(api.worlds.loadWorld);
 
   const [selectedMap, setSelectedMap] = useState<string>();
+  const [selectedWorld, setSelectedWorld] = useState<string>();
   const [characterNames, setCharacterNames] = useState<Set<string>>(new Set());
   const [currentStep, setCurrentStep] = useState<number>();
   const [creatingWorld, setCreatingWorld] = useState<boolean>(false);
+  const [loadingWorld, setLoadingWorld] = useState<boolean>(false);
 
   const createWorldSteps = ["Select Map", "Select Characters"];
 
+  const loadWorld = async () => {
+    await loadWorldAction({worldId: selectedWorld!});
+  };
+  
   const createWorld = async () => {
     const characters = allCharacters?.filter((character) => characterNames.has(character.name));
     const descriptions = Descriptions?.filter((description) => characterNames.has(description.character));
@@ -100,11 +108,11 @@ export default function Menu({
                   </p>
                 </div> */}
 
-                <div className="mt-4">
-                  { !creatingWorld && 
+                <div className="mt-4 flex flex-col space-y-4">
+                  { !creatingWorld && !loadingWorld &&
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
                       onClick={() => {
                         setCreatingWorld(true);
                         setCurrentStep(0);
@@ -112,6 +120,53 @@ export default function Menu({
                     >
                       Create World
                     </button>
+                  }
+                  { !creatingWorld && !loadingWorld &&
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
+                      onClick={() => {
+                        setLoadingWorld(true);
+                      }}
+                    >
+                      Load World
+                    </button>
+                  }
+                  { loadingWorld &&
+                    <>
+                      <div className="max-h-60 overflow-auto">
+                        {allWorlds?.map((world: Record<string, any>) => (
+                          <Fragment key={world._id}>
+                            <div className="flex items-center">
+                              <Checkbox
+                                aria-labelledby={world._id}
+                                checked={selectedMap == world._id}
+                                onChange={() => toggleMap(world._id)}
+                              />
+                              <span className="text-black" id={world._id}>{world._id}</span>
+                            </div>
+                          </Fragment>
+                        ))}
+                      </div>
+                      <div className="flex flex-row justify-between">
+                        <button
+                          type="button"
+                          className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          onClick={() => {
+                            setLoadingWorld(false);
+                          }}
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          onClick={loadWorld}
+                        >
+                          Load World
+                        </button>
+                      </div>
+                    </>
                   }
                   { creatingWorld && 
                     <form onSubmit={createWorld}>

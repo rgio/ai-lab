@@ -70,5 +70,12 @@ export const getAllMaps = query({ args: {}, handler: async (ctx: any) => {
       .collect();
     return maps;
 }});
+
+export const getAllWorlds = query({ args: {}, handler: async (ctx: any) => {
+    const worlds = await ctx.db
+      .query('worlds')
+      .collect();
+    return worlds;
+}});
   
 export default createWorld;
