@@ -14,7 +14,6 @@ import { asyncMap, pruneNull } from './lib/utils';
 export const tick = internalMutation({
   args: { worldId: v.id('worlds'), noSchedule: v.optional(v.boolean()) },
   handler: async (ctx, { worldId, noSchedule }) => {
-    console.log(`TICK`);
     const ts = Date.now();
     // Fetch the first recent heartbeat.
     if (!(await getRecentHeartbeat(ctx.db, worldId))) {
@@ -150,7 +149,8 @@ export const freezeAll = mutation({
 export const unfreeze = mutation({
   args: { worldId: v.optional(v.id('worlds')) },
   handler: async (ctx, args) => {
-    const world = await ctx.db.query('worlds').order('desc').first();
+    // const world = await ctx.db.query('worlds').order('desc').first();
+    const world = await ctx.db.query('worlds').withIndex('by_currentWorld', (q) => q.eq('currentWorld', true)).first();
     if (!world) throw new Error("Didn't unfreeze: No world found");
     await ctx.db.patch(world._id, { frozen: false });
     await ctx.scheduler.runAfter(0, internal.engine.tick, { worldId: world._id });

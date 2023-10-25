@@ -1,11 +1,25 @@
 import { v } from 'convex/values';
 import { Doc, Id } from './_generated/dataModel';
 import { internal } from './_generated/api';
-import { query, action } from './_generated/server';
+import { 
+  query,
+  action,
+  mutation,
+} from './_generated/server';
 import { MemoryDB } from './lib/memory';
 import { Characters, Descriptions } from './schema';
 
 //type Player = { id: Id<'players'>; name: string; identity: string };
+
+export const loadWorld = mutation({
+  args: { worldId: v.string() },
+  handler: async (ctx: any, { worldId }) => {
+    const currentWorld = await ctx.db.query('worlds').withIndex('by_currentWorld', (q: any) => q.eq('currentWorld', true)).first();
+    if (currentWorld) { await ctx.db.patch(currentWorld._id, { currentWorld: false }); }
+    await ctx.db.patch(worldId, { currentWorld: true });
+    return;
+  },
+});
 
 export const createWorld = action({
     args: { 
@@ -22,8 +36,6 @@ export const createWorld = action({
           worldId: Id<'worlds'>;
         };
 
-        console.log("Before")
-
         const result: addPlayersResult = await ctx.runMutation(internal.init.addPlayers, {
           newWorld: true,
           characters,
@@ -31,8 +43,6 @@ export const createWorld = action({
           frozen: false,
           mapId,
         });
-
-        console.log(`Result: ${JSON.stringify(result)}`);
 
         const { playersByName, worldId } = result;
 
@@ -77,5 +87,5 @@ export const getAllWorlds = query({ args: {}, handler: async (ctx: any) => {
       .collect();
     return worlds;
 }});
-  
+
 export default createWorld;

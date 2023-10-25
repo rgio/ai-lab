@@ -10,6 +10,7 @@ export const Worlds = Table('worlds', {
   height: v.optional(v.number()),
   mapId: v.id('maps'),
   frozen: v.boolean(),
+  currentWorld: v.boolean(),
 });
 
 export const ReplicateWebhooks = Table('replicate_webhooks', {
@@ -283,7 +284,7 @@ export type Descriptions = Infer<typeof Descriptions>;
 
 export default defineSchema(
   {
-    worlds: Worlds.table,
+    worlds: Worlds.table.index('by_currentWorld', ['currentWorld']),
     maps: Maps.table,
     characters: Characters.table,
     players: defineTable({

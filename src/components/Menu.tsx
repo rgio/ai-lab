@@ -1,6 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react'
 import { Checkbox } from '@mui/material';
-import { useQuery, useAction } from 'convex/react';
+import { useQuery, useAction, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Fragment, useState } from 'react'
 import { Descriptions, characters as characterData } from '../../convex/characterdata/data';
@@ -20,7 +20,7 @@ export default function Menu({
   const allWorlds = useQuery(api.worlds.getAllWorlds);
   const allCharacters = characterData;
   const createWorldAction = useAction(api.worlds.createWorld);
-  const loadWorldAction = useAction(api.worlds.loadWorld);
+  const loadWorldMutation = useMutation(api.worlds.loadWorld);
 
   const [selectedMap, setSelectedMap] = useState<string>();
   const [selectedWorld, setSelectedWorld] = useState<string>();
@@ -32,7 +32,7 @@ export default function Menu({
   const createWorldSteps = ["Select Map", "Select Characters"];
 
   const loadWorld = async () => {
-    await loadWorldAction({worldId: selectedWorld!});
+    await loadWorldMutation({worldId: selectedWorld!});
   };
   
   const createWorld = async () => {
@@ -40,6 +40,14 @@ export default function Menu({
     const descriptions = Descriptions?.filter((description) => characterNames.has(description.character));
     await createWorldAction({mapId: selectedMap!, characters, descriptions });
   };
+
+  const toggleWorld= (worldId: string) => {
+    if (selectedWorld == worldId) {
+      setSelectedWorld(undefined);
+    } else {
+      setSelectedWorld(worldId);
+    }
+  }
 
   const toggleMap = (mapId: string) => {
     if (selectedMap == mapId) {
@@ -140,8 +148,8 @@ export default function Menu({
                             <div className="flex items-center">
                               <Checkbox
                                 aria-labelledby={world._id}
-                                checked={selectedMap == world._id}
-                                onChange={() => toggleMap(world._id)}
+                                checked={selectedWorld == world._id}
+                                onChange={() => toggleWorld(world._id)}
                               />
                               <span className="text-black" id={world._id}>{world._id}</span>
                             </div>

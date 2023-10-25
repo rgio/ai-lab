@@ -14,7 +14,8 @@ import { TableNames } from './_generated/dataModel';
 export const recoverThinkingAgents = internalMutation({
   args: {},
   handler: async (ctx, args) => {
-    const world = await ctx.db.query('worlds').order('desc').first();
+    // const world = await ctx.db.query('worlds').order('desc').first();
+    const world = await ctx.db.query('worlds').withIndex('by_currentWorld', (q) => q.eq('currentWorld', true)).first();
     if (!world) throw new Error('No world found');
     // Future: we can check all players, but for now just the most recent world.
     const ts = Date.now();
@@ -43,7 +44,8 @@ const BUFFER = 1_000;
 export const recoverStoppedAgents = internalMutation({
   args: {},
   handler: async (ctx, args) => {
-    const world = await ctx.db.query('worlds').order('desc').first();
+    // const world = await ctx.db.query('worlds').order('desc').first();
+    const world = await ctx.db.query('worlds').withIndex('by_currentWorld', (q) => q.eq('currentWorld', true)).first();
     if (!world) throw new Error('No world found');
     if (world.frozen) {
       console.debug("Didn't tick: world frozen");

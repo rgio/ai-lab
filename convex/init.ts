@@ -47,11 +47,16 @@ export async function makeWorld(db: DatabaseWriter, frozen: boolean, mapId?: Id<
     width = map?.bgTiles[0].length;
     height = map?.bgTiles[0][0].length;
   }
+  const currentWorld = await db.query('worlds').withIndex('by_currentWorld', (q) => q.eq('currentWorld', true)).first();
+  if (currentWorld) {
+    await db.patch(currentWorld._id, { currentWorld: false });
+  }
   const worldId = await db.insert('worlds', {
     width,
     height,
     mapId,
     frozen,
+    currentWorld: true,
   });
   return worldId;
 }
@@ -142,7 +147,6 @@ export const seed = internalAction({
     console.log(`newWorld: ${newWorld}`);
     console.log(`frozen: ${frozen}`);
     const characters = characterData;
-    console.log(`Characters: ${JSON.stringify(characters)}`);
     const { playersByName, worldId } = await ctx.runMutation(internal.init.addPlayers, {
       newWorld,
       characters,
@@ -172,7 +176,6 @@ export const seed = internalAction({
         return newMemory;
       });
     });
-    console.log(`Memories: ${JSON.stringify(memories)}`);
     // It will check the cache, calculate missing embeddings, and add them.
     // If it fails here, it won't be retried. But you could clear the memor
     await MemoryDB(ctx).addMemories(memories);
