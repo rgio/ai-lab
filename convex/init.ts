@@ -17,6 +17,7 @@ const init = mutation({
     numAgents: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    console.warn(`INIT ARGS: ${JSON.stringify(args)}`);
     if (!process.env.OPENAI_API_KEY) {
       const deploymentName = process.env.CONVEX_CLOUD_URL?.slice(8).replace('.convex.cloud', '');
       throw new Error(
@@ -62,6 +63,9 @@ async function getOrCreateDefaultWorld(
   ctx: MutationCtx,
   args: {
     newWorld?: boolean;
+    newScenario?: true;
+    topic?: string;
+    source?: string;
   },
 ) {
   const now = Date.now();
@@ -90,13 +94,17 @@ async function getOrCreateDefaultWorld(
     conversations: [],
     players: [],
   });
+
+  console.warn(`GET_OR_CREATE ARGS: ${JSON.stringify(args)}`);
+
   const worldStatusId = await ctx.db.insert('worldStatus', {
     engineId: engineId,
     isDefault: true,
     lastViewed: now,
-    status: 'stoppedByDeveloper',
     worldId: worldId,
-    scenarioInProgress: false,
+    status: 'running',
+    //status: args.newScenario ? 'running' : 'stoppedByDeveloper',
+    scenarioInProgress: args.newScenario ? false : undefined,
   });
   worldStatus = (await ctx.db.get(worldStatusId))!;
 
@@ -112,6 +120,20 @@ async function getOrCreateDefaultWorld(
     objectTiles: map.objmap,
     animatedSprites: map.animatedsprites,
   });
+
+  if (args.newScenario && args.topic && args.source) {
+    const scenarioId = await ctx.db.insert('scenarios', {
+      worldId: worldId,
+      type: 'debate',
+      description: 'A debate between multiple agents',
+      settings: {
+        rounds: 3,
+        topic: args.topic,
+        reference: args.source,
+      },
+    });
+  }
+
   await ctx.scheduler.runAfter(0, internal.aiTown.main.runStep, {
     worldId,
     generationNumber: engine.generationNumber,
@@ -128,8 +150,6 @@ export const createScenario = mutation({
     numAgents: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    console.warn(`CREATE SCENARIO`);
-    console.log(`args: ${JSON.stringify(args)}`);
     if (!process.env.OPENAI_API_KEY) {
       const deploymentName = process.env.CONVEX_CLOUD_URL?.slice(8).replace('.convex.cloud', '');
       throw new Error(
@@ -144,66 +164,13 @@ export const createScenario = mutation({
     // Stop running engine before creating new world
     await stopRunningEngine(ctx);
 
-    const now = Date.now();
-
-    let worldStatus = await ctx.db
-      .query('worldStatus')
-      .filter((q) => q.eq(q.field('isDefault'), true))
-      .unique();
-
-    if (worldStatus) {
-      await ctx.db.patch(worldStatus._id, {
-        isDefault: false,
-      });
-    }
-
-    const engineId = await createEngine(ctx);
-    const engine = (await ctx.db.get(engineId))!;
-    const worldId = await ctx.db.insert('worlds', {
-      nextId: 0,
-      agents: [],
-      conversations: [],
-      players: [],
-    });
-    const worldStatusId = await ctx.db.insert('worldStatus', {
-      engineId: engineId,
-      isDefault: true,
-      lastViewed: now,
-      status: 'running',
-      worldId: worldId,
-      scenarioInProgress: true,
-    });
-    worldStatus = (await ctx.db.get(worldStatusId))!;
-    //TODO: evaluate if this is needed
-    const scenarioId = await ctx.db.insert('scenarios', {
-      worldId: worldId,
-      type: 'debate',
-      description: 'A debate between multiple agents',
-      settings: {
-        rounds: 3,
-        topic: args.topic,
-        reference: args.source,
-      },
-    });
-    await ctx.db.insert('maps', {
-      worldId,
-      width: map.mapwidth,
-      height: map.mapheight,
-      tileSetUrl: map.tilesetpath,
-      tileSetDimX: map.tilesetpxw,
-      tileSetDimY: map.tilesetpxh,
-      tileDim: map.tiledim,
-      bgTiles: map.bgtiles,
-      objectTiles: map.objmap,
-      animatedSprites: map.animatedsprites,
-    });
-    await ctx.scheduler.runAfter(0, internal.aiTown.main.runStep, {
-      worldId,
-      generationNumber: engine.generationNumber,
-      maxDuration: ENGINE_ACTION_DURATION,
+    const { worldStatus, engine } = await getOrCreateDefaultWorld(ctx, {
+      newWorld: true,
+      newScenario: true,
+      topic: args.topic,
+      source: args.source,
     });
 
-    //const { worldStatus, engine } = await getOrCreateDefaultWorld(ctx, args);
     if (worldStatus.status !== 'running') {
       console.warn(
         `Engine ${engine._id} is not active! Run "npx convex run testing:resume" to restart it.`,
@@ -218,8 +185,7 @@ export const createScenario = mutation({
     );
     if (shouldCreate) {
       const toCreate = args.numAgents !== undefined ? args.numAgents : Descriptions.length;
-      console.warn(`CreateScenario: Creating ${toCreate} agents`);
-      console.warn(`WORLDID: ${worldStatus.worldId}`);
+      console.warn(`Init: Creating ${toCreate} agents`);
       for (let i = 0; i < toCreate; i++) {
         await insertInput(ctx, worldStatus.worldId, 'createAgent', {
           descriptionIndex: i % Descriptions.length,
@@ -228,6 +194,115 @@ export const createScenario = mutation({
     }
   },
 });
+
+// export const createScenario = mutation({
+//   args: {
+//     type: v.optional(v.string()),
+//     topic: v.string(),
+//     source: v.string(),
+//     numAgents: v.optional(v.number()),
+//   },
+//   handler: async (ctx, args) => {
+//     console.warn(`CREATE SCENARIO`);
+//     console.log(`args: ${JSON.stringify(args)}`);
+//     if (!process.env.OPENAI_API_KEY) {
+//       const deploymentName = process.env.CONVEX_CLOUD_URL?.slice(8).replace('.convex.cloud', '');
+//       throw new Error(
+//         '\n  Missing OPENAI_API_KEY in environment variables.\n\n' +
+//           '  Get one at https://openai.com/\n\n' +
+//           '  Paste it on the Convex dashboard:\n' +
+//           '  https://dashboard.convex.dev/d/' +
+//           deploymentName +
+//           '/settings?var=OPENAI_API_KEY',
+//       );
+//     }
+//     // Stop running engine before creating new world
+//     await stopRunningEngine(ctx);
+
+//     const now = Date.now();
+
+//     let worldStatus = await ctx.db
+//       .query('worldStatus')
+//       .filter((q) => q.eq(q.field('isDefault'), true))
+//       .unique();
+
+//     if (worldStatus) {
+//       await ctx.db.patch(worldStatus._id, {
+//         isDefault: false,
+//       });
+//     }
+
+//     const engineId = await createEngine(ctx);
+//     const engine = (await ctx.db.get(engineId))!;
+//     const worldId = await ctx.db.insert('worlds', {
+//       nextId: 0,
+//       agents: [],
+//       conversations: [],
+//       players: [],
+//     });
+//     const worldStatusId = await ctx.db.insert('worldStatus', {
+//       engineId: engineId,
+//       isDefault: true,
+//       lastViewed: now,
+//       status: 'running',
+//       worldId: worldId,
+//       scenarioInProgress: true,
+//     });
+//     worldStatus = (await ctx.db.get(worldStatusId))!;
+//     //TODO: evaluate if this is needed
+//     const scenarioId = await ctx.db.insert('scenarios', {
+//       worldId: worldId,
+//       type: 'debate',
+//       description: 'A debate between multiple agents',
+//       settings: {
+//         rounds: 3,
+//         topic: args.topic,
+//         reference: args.source,
+//       },
+//     });
+//     await ctx.db.insert('maps', {
+//       worldId,
+//       width: map.mapwidth,
+//       height: map.mapheight,
+//       tileSetUrl: map.tilesetpath,
+//       tileSetDimX: map.tilesetpxw,
+//       tileSetDimY: map.tilesetpxh,
+//       tileDim: map.tiledim,
+//       bgTiles: map.bgtiles,
+//       objectTiles: map.objmap,
+//       animatedSprites: map.animatedsprites,
+//     });
+//     await ctx.scheduler.runAfter(0, internal.aiTown.main.runStep, {
+//       worldId,
+//       generationNumber: engine.generationNumber,
+//       maxDuration: ENGINE_ACTION_DURATION,
+//     });
+
+//     //const { worldStatus, engine } = await getOrCreateDefaultWorld(ctx, args);
+//     if (worldStatus.status !== 'running') {
+//       console.warn(
+//         `Engine ${engine._id} is not active! Run "npx convex run testing:resume" to restart it.`,
+//       );
+//       return;
+//     }
+
+//     const shouldCreate = await shouldCreateAgents(
+//       ctx.db,
+//       worldStatus.worldId,
+//       worldStatus.engineId,
+//     );
+//     if (shouldCreate) {
+//       const toCreate = args.numAgents !== undefined ? args.numAgents : Descriptions.length;
+//       console.warn(`CreateScenario: Creating ${toCreate} agents`);
+//       console.warn(`WORLDID: ${worldStatus.worldId}`);
+//       for (let i = 0; i < toCreate; i++) {
+//         await insertInput(ctx, worldStatus.worldId, 'createAgent', {
+//           descriptionIndex: i % Descriptions.length,
+//         });
+//       }
+//     }
+//   },
+// });
 
 async function shouldCreateAgents(
   db: DatabaseReader,

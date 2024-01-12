@@ -8,7 +8,7 @@ export const serializedWorldStatus = {
   engineId: v.id('engines'),
   lastViewed: v.number(),
   status: v.union(v.literal('running'), v.literal('stoppedByDeveloper'), v.literal('inactive')),
-  scenarioInProgress: v.boolean(),
+  scenarioInProgress: v.optional(v.boolean()),
 };
 export type SerializedWorldStatus = ObjectType<typeof serializedWorldStatus>;
 
@@ -19,7 +19,7 @@ export class WorldStatus {
   engineId: Id<'engines'>;
   lastViewed: number;
   status: 'running' | 'stoppedByDeveloper' | 'inactive';
-  scenarioInProgress: boolean;
+  scenarioInProgress?: boolean | undefined;
 
   constructor(serialized: SerializedWorldStatus) {
     this.id = serialized.id;
