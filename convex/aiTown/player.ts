@@ -80,13 +80,13 @@ export class Player {
     this.speed = speed;
   }
 
-  tick(game: Game, now: number) {
+  tick?(game: Game, now: number) {
     if (this.human && this.lastInput < now - HUMAN_IDLE_TOO_LONG) {
-      this.leave(game, now);
+      this.leave && this.leave(game, now);
     }
   }
 
-  tickPathfinding(game: Game, now: number) {
+  tickPathfinding?(game: Game, now: number) {
     // There's nothing to do if we're not moving.
     const { pathfinding, position } = this;
     if (!pathfinding) {
@@ -129,7 +129,7 @@ export class Player {
     }
   }
 
-  tickPosition(game: Game, now: number) {
+  tickPosition?(game: Game, now: number) {
     // There's nothing to do if we're not moving.
     if (!this.pathfinding || this.pathfinding.state.kind !== 'moving') {
       this.speed = 0;
@@ -232,7 +232,7 @@ export class Player {
     return playerId;
   }
 
-  leave(game: Game, now: number) {
+  leave?(game: Game, now: number) {
     // Stop our conversation if we're leaving the game.
     const conversation = [...game.world.conversations.values()].find((c) =>
       c.participants.has(this.id),
@@ -243,7 +243,7 @@ export class Player {
     game.world.players.delete(this.id);
   }
 
-  serialize(): SerializedPlayer {
+  serialize?(): SerializedPlayer {
     const { id, human, pathfinding, activity, lastInput, position, facing, speed } = this;
     return {
       id,
@@ -279,7 +279,7 @@ export const playerInputs = {
       if (!player) {
         throw new Error(`Invalid player ID ${playerId}`);
       }
-      player.leave(game, now);
+      player.leave && player.leave(game, now);
       return null;
     },
   }),

@@ -125,13 +125,13 @@ export class Agent {
     if (!conversation && !doingActivity && (!player.pathfinding || !recentlyAttemptedInvite)) {
       this.startOperation(game, now, 'agentDoSomething', {
         worldId: game.worldId,
-        player: player.serialize(),
+        player: (player.serialize && player.serialize()) || player,
         otherFreePlayers: [...game.world.players.values()]
           .filter((p) => p.id !== player.id)
           .filter(
             (p) => ![...game.world.conversations.values()].find((c) => c.participants.has(p.id)),
           )
-          .map((p) => p.serialize()),
+          .map((p) => (p.serialize && p.serialize()) || p),
         agent: this.serialize(),
         map: game.worldMap.serialize(),
       });

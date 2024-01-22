@@ -21,7 +21,7 @@ export const serializedScenario = {
   worldId: v.id('worlds'),
   type: v.union(v.literal('debate'), v.literal('auction')),
   description: v.string(),
-  conversation: v.object(serializedConversation),
+  conversation: v.optional(v.object(serializedConversation)),
   settings: v.object(serializedDebateSettings),
 };
 export type SerializedScenario = ObjectType<typeof serializedScenario>;
@@ -49,27 +49,21 @@ export class Scenario {
     console.log(`START MULTIPLAYER`);
   }
 
-  getInitialMessage() {
-    if (this.type === 'debate') {
-      const prompt = [
-        `You are ${
-          player.name
-        }, and you're currently in a conversation with ${otherPlayerNames.join(', ')}.`,
-        `The conversation started at ${started.toLocaleString()}. It's now ${now.toLocaleString()}.`,
-      ];
-      return ` 
-      
-      `;
-    }
-  }
-
   serialize(): SerializedScenario {
+    let c;
+    if (this.conversation) {
+      c = {
+        ...this.conversation,
+        participants: [...this.conversation.participants.values()].map((p) => p.serialize()),
+      };
+    }
+
     return {
       id: this.id,
       worldId: this.worldId,
       type: this.type,
       description: this.description,
-      conversation: this.conversation,
+      conversation: c,
       settings: this.settings,
     };
   }

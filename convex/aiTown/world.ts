@@ -57,7 +57,7 @@ export class World {
       id: this.id,
       nextId: this.nextId,
       conversations: [...this.conversations.values()].map((c) => c.serialize()),
-      players: [...this.players.values()].map((p) => p.serialize()),
+      players: [...this.players.values()].map((p) => (p.serialize ? p.serialize() : p)),
       agents: [...this.agents.values()].map((a) => a.serialize()),
       historicalLocations:
         this.historicalLocations &&

@@ -7,6 +7,7 @@ import { sleep } from '../util/sleep';
 import { Id } from '../_generated/dataModel';
 import { ENGINE_ACTION_DURATION } from '../constants';
 import { Scenario } from './scenario';
+import { parseGameId } from './ids';
 
 export async function createEngine(ctx: MutationCtx) {
   const now = Date.now();
@@ -135,7 +136,17 @@ export const runStep = internalAction({
         console.log('STARTING SCENARIO');
         console.log(`World Status: ${JSON.stringify(worldStatus)}`);
         //Scenario.start(game, now, players);
-        game.scenario?.start(game, now, players);
+        // const scenarioPlayers = players.map((p) => {
+        //   id: parseGameId('players', p.id),
+        //   ...p
+        // });
+        const scenarioPlayers = players.map((p) => {
+          return {
+            ...p,
+            id: parseGameId('players', p.id),
+          };
+        });
+        game.scenario?.start(game, now, scenarioPlayers);
       }
 
       const deadline = now + args.maxDuration;

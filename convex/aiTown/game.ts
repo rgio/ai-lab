@@ -35,7 +35,7 @@ const gameState = v.object({
   agentDescriptions: v.array(v.object(serializedAgentDescription)),
   worldMap: v.object(serializedWorldMap),
   worldStatus: v.object(serializedWorldStatus),
-  scenario: v.object(serializedScenario),
+  scenario: v.optional(v.object(serializedScenario)),
 });
 type GameState = Infer<typeof gameState>;
 
@@ -144,6 +144,11 @@ export class Game extends AbstractGame {
       worldId: mapWorldId,
       ...worldMap
     } = worldMapDoc;
+    let scenarioDoc;
+    let scenarioId;
+    if (scenario) {
+      ({ _id: scenarioId, ...scenarioDoc } = scenario);
+    }
     return {
       engine,
       gameState: {
@@ -152,7 +157,10 @@ export class Game extends AbstractGame {
         agentDescriptions,
         worldMap,
         worldStatus,
-        scenario,
+        scenario: {
+          id: scenarioId,
+          ...scenarioDoc,
+        },
       },
     };
   }
@@ -188,13 +196,13 @@ export class Game extends AbstractGame {
 
   tick(now: number) {
     for (const player of this.world.players.values()) {
-      player.tick(this, now);
+      player.tick && player.tick(this, now);
     }
     for (const player of this.world.players.values()) {
-      player.tickPathfinding(this, now);
+      player.tickPathfinding && player.tickPathfinding(this, now);
     }
     for (const player of this.world.players.values()) {
-      player.tickPosition(this, now);
+      player.tickPosition && player.tickPosition(this, now);
     }
     for (const conversation of this.world.conversations.values()) {
       conversation.tick(this, now);
@@ -278,7 +286,8 @@ export class Game extends AbstractGame {
         const archivedConversation = {
           worldId,
           id: conversation.id,
-          topic: conversation.topic,
+          topic: conversation.topic || '',
+          reference: conversation.reference || '',
           created: conversation.created,
           creator: conversation.creator,
           ended: Date.now(),

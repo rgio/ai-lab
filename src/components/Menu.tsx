@@ -19,12 +19,12 @@ export default function Menu({
   // const allMaps = useQuery(api.worlds.getAllMaps);
   // const allWorlds = useQuery(api.worlds.getAllWorlds);
   // const allCharacters = characterData;
-  // const createWorldAction = useAction(api.worlds.createWorld);
+  //const createWorldAction = useAction(api.worlds.createWorld);
   // const loadWorldMutation = useMutation(api.worlds.loadWorld);
-  const allWorlds = [];
-  const allMaps = [];
-  const allCharacters = [];
-  const descriptions = [];
+  const allWorlds: any[] = [];
+  const allMaps: any[] = [];
+  const allCharacters: any[] = [];
+  const allDescriptions: any[] = [];
 
   const [selectedMap, setSelectedMap] = useState<string>();
   const [selectedWorld, setSelectedWorld] = useState<string>();
@@ -39,11 +39,13 @@ export default function Menu({
     //await loadWorldMutation({ worldId: selectedWorld! });
   };
 
-  // const createWorld = async () => {
-  //   const characters = allCharacters?.filter((character) => characterNames.has(character.name));
-  //   const descriptions = Descriptions?.filter((description) => characterNames.has(description.character));
-  //   await createWorldAction({mapId: selectedMap!, characters, descriptions });
-  // };
+  const createWorld = async () => {
+    const characters = allCharacters?.filter((character) => characterNames.has(character.name));
+    const descriptions = allDescriptions?.filter((description) =>
+      characterNames.has(description.character),
+    );
+    //await createWorldAction({mapId: selectedMap!, characters, descriptions });
+  };
 
   const toggleWorld = (worldId: string) => {
     if (selectedWorld == worldId) {
@@ -232,7 +234,7 @@ export default function Menu({
                                   />
                                   <span className="text-black" id={character._id}>
                                     {
-                                      Descriptions?.find((el) => el.character == character.name)
+                                      allDescriptions?.find((el) => el.character == character.name)
                                         ?.name
                                     }
                                   </span>
