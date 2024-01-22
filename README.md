@@ -14,6 +14,8 @@ and inspired by the paper [Generative Agents: Interactive Simulacra of Human Beh
 
 The goal of this project is to provide a framework for studying multi-agent interactions in a simulated environment. Currently the project supports simulation of a multi-agent debate on a topic of your choosing. Future work will enable customization of agent personas and development of new scenarios.
 
+A live demo of the project is available at [https://ai-lab-peach.vercel.app/](https://ai-lab-peach.vercel.app/)
+
 ## Overview
 
 - 💻 [Stack](#stack)
