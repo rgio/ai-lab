@@ -18,18 +18,31 @@ import { MAX_HUMAN_PLAYERS } from '../convex/constants.ts';
 import Menu from './components/Menu.tsx';
 import { useQuery } from 'convex/react';
 import { api } from '../convex/_generated/api';
+import { create } from 'domain';
 
 export default function Home() {
+  let creatingJson = localStorage.getItem('creatingScenario');
+  let creating = false;
+  if (creatingJson == null) {
+    creating = false;
+  } else {
+    creating = JSON.parse(creatingJson);
+  }
   const [helpModalOpen, setHelpModalOpen] = useState(false);
-  const [creatingScenario, setCreatingScenario] = useState(true);
+  const [creatingScenario, setCreatingScenario] = useState(creating);
 
+  console.log(`CREATING IS: ${JSON.stringify(creating)}`);
+  console.log(`CREATING SCENARIO IS: ${JSON.stringify(creatingScenario)}`);
   const worldStatus = useQuery(api.world.defaultWorldStatus);
 
   useEffect(() => {
-    if (worldStatus?.scenarioInProgress) {
+    console.log(`USE EFFECT`);
+    console.log(`CREATING: ${JSON.stringify(creating)}`);
+    console.log(`WORLD STATUS: ${JSON.stringify(worldStatus)}`);
+    if (!creating && worldStatus?.scenarioInProgress) {
       setCreatingScenario(false);
     }
-  });
+  }, [worldStatus]);
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-between font-body game-background">
@@ -102,6 +115,18 @@ export default function Home() {
         <footer className="absolute bottom-0 left-0 w-full flex items-center mt-4 gap-3 p-6 flex-wrap pointer-events-none">
           <div className="flex gap-4 flex-grow pointer-events-none">
             {!creatingScenario && <FreezeButton />}
+            {!creatingScenario && (
+              <Button
+                onClick={() => {
+                  setCreatingScenario(true);
+                  localStorage.setItem('creatingScenario', JSON.stringify(true));
+                }}
+                title="Create a new scenario."
+                imgUrl="/assets/interact.svg"
+              >
+                New Scenario
+              </Button>
+            )}
             {/* <MusicButton /> */}
             {/* <Button href="https://github.com/a16z-infra/ai-town" imgUrl={starImg}>
               Star

@@ -12,6 +12,7 @@ export function Messages({
   conversation,
   inConversationWithMe,
   humanPlayer,
+  topic,
 }: {
   worldId: Id<'worlds'>;
   engineId: Id<'engines'>;
@@ -20,6 +21,7 @@ export function Messages({
     | { kind: 'archived'; doc: Doc<'archivedConversations'> };
   inConversationWithMe: boolean;
   humanPlayer?: Player;
+  topic?: string;
 }) {
   const humanPlayerId = humanPlayer?.id;
   const descriptions = useQuery(api.world.gameDescriptions, { worldId });
@@ -62,25 +64,36 @@ export function Messages({
   const lastMessageTs = messages.map((m) => m._creationTime).reduce((a, b) => Math.max(a, b), 0);
 
   const membershipNodes: typeof messageNodes = [];
+  let memberNames = '';
+  let numMembers = 0;
+  let started;
   if (conversation.kind === 'active') {
     for (const [playerId, m] of conversation.doc.participants) {
       const playerName = descriptions?.playerDescriptions.find((p) => p.playerId === playerId)
         ?.name;
-      let started;
       if (m.status.kind === 'participating') {
         started = m.status.started;
       }
       if (started) {
-        membershipNodes.push({
-          node: (
-            <div key={`joined-${playerId}`} className="leading-tight mb-6">
-              <p className="text-brown-700 text-center">{playerName} joined the conversation.</p>
-            </div>
-          ),
-          time: started,
-        });
+        memberNames =
+          memberNames +
+          (numMembers > 0 && numMembers < conversation.doc.participants.size - 1
+            ? ', ' + playerName
+            : numMembers == conversation.doc.participants.size - 1
+            ? ', and ' + playerName
+            : ' ' + playerName);
+        numMembers++;
       }
     }
+    membershipNodes.push({
+      node: (
+        <div key={`joined`} className="leading-tight mb-6">
+          {topic && <p className="text-black text-center mb-6">Topic: {topic}</p>}
+          <p className="text-brown-700 text-center">{memberNames} joined the conversation.</p>
+        </div>
+      ),
+      time: started!,
+    });
   } else {
     for (const playerId of conversation.doc.participants) {
       const playerName = descriptions?.playerDescriptions.find((p) => p.playerId === playerId)

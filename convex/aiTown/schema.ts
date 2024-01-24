@@ -17,6 +17,7 @@ export const aiTownTables = {
 
   scenarios: defineTable({
     worldId: v.id('worlds'),
+    conversationId: v.optional(conversationId),
     type: v.union(v.literal('debate'), v.literal('auction')),
     description: v.string(),
     settings: v.object(serializedDebateSettings),

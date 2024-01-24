@@ -147,6 +147,13 @@ export const runStep = internalAction({
           };
         });
         game.scenario?.start(game, now, scenarioPlayers);
+        console.log(`game scenario: ${JSON.stringify(game.scenario)}`);
+        if (game.scenario) {
+          await ctx.runMutation(internal.aiTown.scenario.setConversation, {
+            scenarioId: game.scenario.id!,
+            conversationId: game.scenario?.conversation?.id ?? '',
+          });
+        }
       }
 
       const deadline = now + args.maxDuration;

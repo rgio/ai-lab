@@ -3,6 +3,7 @@ import { Game } from './game';
 import { ObjectType, v } from 'convex/values';
 import { Player } from './player';
 import { Conversation, serializedConversation } from './conversation';
+import { internalMutation } from '../_generated/server';
 
 // export const serializedAuctionSettings = {
 //   rounds: v.number(),
@@ -22,6 +23,7 @@ export const serializedScenario = {
   type: v.union(v.literal('debate'), v.literal('auction')),
   description: v.string(),
   conversation: v.optional(v.object(serializedConversation)),
+  conversationId: v.optional(v.string()),
   settings: v.object(serializedDebateSettings),
 };
 export type SerializedScenario = ObjectType<typeof serializedScenario>;
@@ -32,6 +34,7 @@ export class Scenario {
   type: 'debate' | 'auction';
   description: string;
   conversation?: Conversation;
+  conversationId?: string;
   settings: SerializedDebateSettings;
 
   constructor(serialized: SerializedScenario) {
@@ -41,6 +44,7 @@ export class Scenario {
     this.description = serialized.description;
     this.conversation =
       (serialized.conversation && new Conversation(serialized.conversation)) || undefined;
+    this.conversationId = serialized.conversationId;
     this.settings = serialized.settings;
   }
 
@@ -64,69 +68,18 @@ export class Scenario {
       type: this.type,
       description: this.description,
       conversation: c,
+      conversationId: this.conversationId,
       settings: this.settings,
     };
   }
 }
 
-// export async function continueConversationMessage(
-//   ctx: ActionCtx,
-//   worldId: Id<'worlds'>,
-//   conversationId: GameId<'conversations'>,
-//   playerId: GameId<'players'>,
-//   otherPlayerIds: GameId<'players'>[],
-// ) {
-//   const { player, otherPlayers, conversation, agent, otherAgents } = await ctx.runQuery(
-//     selfInternal.queryPromptData,
-//     {
-//       worldId,
-//       playerId,
-//       otherPlayerIds,
-//       conversationId,
-//     },
-//   );
-
-//   const otherPlayerNames = otherPlayers.map((p) => p.name);
-//   const now = Date.now();
-//   const started = new Date(conversation.created);
-
-//   const embedding = await embeddingsCache.fetch(
-//     ctx,
-//     `What do you think about ${otherPlayerNames.join(',')}?`,
-//   );
-//   const memories = await memory.searchMemories(ctx, player.id as GameId<'players'>, embedding, 3);
-//   const prompt = [
-//     `You are ${player.name}, and you're currently in a conversation with ${otherPlayerNames.join(
-//       ', ',
-//     )}.`,
-//     `The conversation started at ${started.toLocaleString()}. It's now ${now.toLocaleString()}.`,
-//   ];
-//   prompt.push(...agentPrompts(otherPlayers, agent, otherAgents ?? null));
-//   prompt.push(...relatedMemoriesPrompt(memories));
-//   prompt.push(
-//     `Below is the current chat history between you and ${otherPlayerNames.join(', ')}.`,
-//     `DO NOT greet them again. Do NOT use the word "Hey" too often. Your response should be brief and within 200 characters.`,
-//   );
-
-//   const llmMessages: LLMMessage[] = [
-//     {
-//       role: 'user',
-//       content: prompt.join('\n'),
-//     },
-//     ...(await previousMessages(
-//       ctx,
-//       worldId,
-//       player,
-//       otherPlayers,
-//       conversation.id as GameId<'conversations'>,
-//     )),
-//   ];
-//   llmMessages.push({ role: 'user', content: `${player.name}:` });
-//   const { content } = await chatCompletion({
-//     messages: llmMessages,
-//     max_tokens: 300,
-//     stream: true,
-//     stop: stopWords(otherPlayerNames[0], player.name), // TODO: check this
-//   });
-//   return content;
-// }
+export const setConversation = internalMutation({
+  args: {
+    scenarioId: v.id('scenarios'),
+    conversationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.scenarioId, { conversationId: args.conversationId });
+  },
+});

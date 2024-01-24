@@ -172,6 +172,10 @@ export const worldState = query({
     if (!world) {
       throw new Error(`Invalid world ID: ${args.worldId}`);
     }
+    const scenario = await ctx.db
+      .query('scenarios')
+      .withIndex('worldId', (q) => q.eq('worldId', world._id))
+      .unique();
     const worldStatus = await ctx.db
       .query('worldStatus')
       .withIndex('worldId', (q) => q.eq('worldId', world._id))
@@ -183,7 +187,7 @@ export const worldState = query({
     if (!engine) {
       throw new Error(`Invalid engine ID: ${worldStatus.engineId}`);
     }
-    return { world, engine };
+    return { world, engine, scenario };
   },
 });
 
