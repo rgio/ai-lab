@@ -41,6 +41,7 @@ import type * as constants from "../constants";
 import type * as crons from "../crons";
 import type * as engine_abstractGame from "../engine/abstractGame";
 import type * as engine_historicalObject from "../engine/historicalObject";
+import type * as files from "../files";
 import type * as http from "../http";
 import type * as init from "../init";
 import type * as messages from "../messages";
@@ -96,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "engine/abstractGame": typeof engine_abstractGame;
   "engine/historicalObject": typeof engine_historicalObject;
+  files: typeof files;
   http: typeof http;
   init: typeof init;
   messages: typeof messages;
