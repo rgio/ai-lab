@@ -122,7 +122,7 @@ export default function Home() {
                   localStorage.setItem('creatingScenario', JSON.stringify(true));
                 }}
                 title="Create a new scenario."
-                imgUrl="/assets/interact.svg"
+                imgUrl="public/assets/interact.svg"
               >
                 New Scenario
               </Button>
